@@ -1,0 +1,238 @@
+curl -X GET http://localhost:3060/api/gifts -H "Accept: application/json"
+
+[
+  {
+    "id": "1",
+    "name": "Oak Dining Table & Chairs",
+    "category": "Living",
+    "condition": "Good",
+    "posted_date": 1715000000,
+    "zipcode": "10001",
+    "image": "https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=600&q=80",
+    "description": "Solid oak dining table with four matching cushioned chairs. Minor scratches on surface.",
+    "age_years": 3,
+    "comments": [
+      {
+        "author": "Sarah M.",
+        "comment": "Great sturdy table, very generous offer!",
+        "rating": 5
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "name": "Modern Leather Sofa",
+    "category": "Living",
+    "condition": "Like New",
+    "posted_date": 1715050000,
+    "zipcode": "10002",
+    "image": "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80",
+    "description": "Comfortable 3-seater brown leather sofa. Smoke-free and pet-free home.",
+    "age_years": 1.5,
+    "comments": [
+      {
+        "author": "Alex K.",
+        "comment": "Looks really premium and clean.",
+        "rating": 5
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "name": "Queen Size Bed Frame",
+    "category": "Bedroom",
+    "condition": "Good",
+    "posted_date": 1715100000,
+    "zipcode": "10003",
+    "image": "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=600&q=80",
+    "description": "Minimalist wooden queen size bed frame with slats included. Easy to assemble.",
+    "age_years": 2,
+    "comments": []
+  },
+  {
+    "id": "4",
+    "name": "Samsung 43-inch 4K Smart TV",
+    "category": "Electronics",
+    "condition": "Like New",
+    "posted_date": 1715150000,
+    "zipcode": "10004",
+    "image": "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=600&q=80",
+    "description": "Crisp 4K UHD smart TV with built-in streaming apps and remote control.",
+    "age_years": 1,
+    "comments": [
+      {
+        "author": "David R.",
+        "comment": "Works flawlessly, thank you so much!",
+        "rating": 5
+      }
+    ]
+  },
+  {
+    "id": "5",
+    "name": "Stainless Steel Espresso Machine",
+    "category": "Kitchen",
+    "condition": "Good",
+    "posted_date": 1715200000,
+    "zipcode": "10005",
+    "image": "https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&w=600&q=80",
+    "description": "15-bar pump espresso maker with milk frothing wand. Descaled and cleaned.",
+    "age_years": 2.5,
+    "comments": []
+  },
+  {
+    "id": "6",
+    "name": "Ergonomic Mesh Office Chair",
+    "category": "Office",
+    "condition": "Like New",
+    "posted_date": 1715250000,
+    "zipcode": "10006",
+    "image": "https://images.unsplash.com/photo-1580481077191-7360f1c32609?auto=format&fit=crop&w=600&q=80",
+    "description": "Adjustable lumbar support and 3D armrests. Perfect for work from home.",
+    "age_years": 0.8,
+    "comments": [
+      {
+        "author": "Emily T.",
+        "comment": "Super ergonomic, saved my back!",
+        "rating": 5
+      }
+    ]
+  },
+  {
+    "id": "7",
+    "name": "Acoustic Guitar with Gig Bag",
+    "category": "Music",
+    "condition": "Good",
+    "posted_date": 1715300000,
+    "zipcode": "10007",
+    "image": "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=600&q=80",
+    "description": "Full-size Dreadnought acoustic guitar. Comes with new strings and padded carry case.",
+    "age_years": 4,
+    "comments": []
+  },
+  {
+    "id": "8",
+    "name": "Mountain Bike 21-Speed",
+    "category": "Sports",
+    "condition": "Fair",
+    "posted_date": 1715350000,
+    "zipcode": "10008",
+    "image": "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=600&q=80",
+    "description": "All-terrain mountain bike with disc brakes. Needs minor gear tuning.",
+    "age_years": 5,
+    "comments": [
+      {
+        "author": "Chris B.",
+        "comment": "Good project bike, easy tune-up.",
+        "rating": 4
+      }
+    ]
+  },
+  {
+    "id": "9",
+    "name": "Set of 5 Classic Literature Books",
+    "category": "Books",
+    "condition": "Like New",
+    "posted_date": 1715400000,
+    "zipcode": "10009",
+    "image": "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=600&q=80",
+    "description": "Hardcover classics collection including 1984, Pride & Prejudice, and The Great Gatsby.",
+    "age_years": 1,
+    "comments": []
+  },
+  {
+    "id": "10",
+    "name": "Wooden Educational Toy Set",
+    "category": "Toys",
+    "condition": "Like New",
+    "posted_date": 1715450000,
+    "zipcode": "10010",
+    "image": "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&w=600&q=80",
+    "description": "Non-toxic wooden building blocks and shape sorter for toddlers.",
+    "age_years": 1,
+    "comments": []
+  },
+  {
+    "id": "11",
+    "name": "Vintage Desk Lamp",
+    "category": "Home Decor",
+    "condition": "Good",
+    "posted_date": 1715500000,
+    "zipcode": "10011",
+    "image": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80",
+    "description": "Brass banker-style desk lamp with green glass shade and warm LED bulb.",
+    "age_years": 6,
+    "comments": []
+  },
+  {
+    "id": "12",
+    "name": "Cast Iron Dutch Oven 6-Quart",
+    "category": "Kitchen",
+    "condition": "Like New",
+    "posted_date": 1715550000,
+    "zipcode": "10012",
+    "image": "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=600&q=80",
+    "description": "Enameled cast iron dutch oven pot with tight-fitting lid. Excellent heat retention.",
+    "age_years": 0.5,
+    "comments": [
+      {
+        "author": "Nadia L.",
+        "comment": "Perfect for sourdough baking!",
+        "rating": 5
+      }
+    ]
+  },
+  {
+    "id": "13",
+    "name": "Noise-Cancelling Wireless Headphones",
+    "category": "Electronics",
+    "condition": "Good",
+    "posted_date": 1715600000,
+    "zipcode": "10013",
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+    "description": "Over-ear Bluetooth headphones with active noise cancellation and charging cable.",
+    "age_years": 2,
+    "comments": []
+  },
+  {
+    "id": "14",
+    "name": "Indoor Ceramic Planter Pots (Set of 3)",
+    "category": "Home Decor",
+    "condition": "Like New",
+    "posted_date": 1715650000,
+    "zipcode": "10014",
+    "image": "https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=600&q=80",
+    "description": "Modern minimalist white ceramic pots with drainage holes and bamboo saucers.",
+    "age_years": 0.5,
+    "comments": []
+  },
+  {
+    "id": "15",
+    "name": "Yoga Mat with Carrying Strap & Blocks",
+    "category": "Sports",
+    "condition": "Like New",
+    "posted_date": 1715700000,
+    "zipcode": "10015",
+    "image": "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&w=600&q=80",
+    "description": "Eco-friendly extra-thick 6mm non-slip yoga mat with 2 high-density foam blocks.",
+    "age_years": 0.3,
+    "comments": []
+  },
+  {
+    "id": "16",
+    "name": "Handmade Wool Area Rug (5x7 ft)",
+    "category": "Living",
+    "condition": "Good",
+    "posted_date": 1715750000,
+    "zipcode": "10016",
+    "image": "https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&w=600&q=80",
+    "description": "Geometric pattern woven wool area rug. Professionally steam cleaned.",
+    "age_years": 3.5,
+    "comments": [
+      {
+        "author": "Hassan Z.",
+        "comment": "Beautiful pattern and high quality wool.",
+        "rating": 5
+      }
+    ]
+  }
+]
