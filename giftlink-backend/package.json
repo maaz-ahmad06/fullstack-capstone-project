@@ -18,6 +18,7 @@
     "mongodb": "^6.5.0",
     "natural": "^6.10.4",
     "pino": "^8.20.0",
+    "pino-http": "^11.0.0",
     "pino-pretty": "^11.0.0"
   },
   "devDependencies": {
