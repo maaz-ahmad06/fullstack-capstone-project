@@ -4,6 +4,29 @@ const router = express.Router();
 // Task 5 requirement: includes a database connection using connectToDatabase()
 const connectToDatabase = require('../models/db');
 
+const { ObjectId } = require('mongodb');
+
+/**
+ * Helper to build ID query supporting both custom string id and MongoDB ObjectId
+ */
+function buildIdQuery(id) {
+    if (ObjectId.isValid(id)) {
+        return {
+            $or: [
+                { id: id },
+                { _id: new ObjectId(id) },
+                { _id: id }
+            ]
+        };
+    }
+    return {
+        $or: [
+            { id: id },
+            { _id: id }
+        ]
+    };
+}
+
 /**
  * Route: GET /api/gifts
  * Task 5 requirement: routes serving /api/gifts
@@ -33,7 +56,7 @@ router.get('/:id', async (req, res) => {
         const id = req.params.id;
         
         // Find by string id or MongoDB _id
-        const gift = await collection.findOne({ id: id });
+        const gift = await collection.findOne(buildIdQuery(id));
         
         if (!gift) {
             return res.status(404).json({ error: `Gift with id ${id} not found.` });
@@ -66,9 +89,17 @@ router.post('/', async (req, res) => {
         }
         newGift.posted_date = newGift.posted_date || Math.floor(Date.now() / 1000);
         newGift.comments = newGift.comments || [];
+        newGift.condition = newGift.condition || 'Good';
+        newGift.age_years = newGift.age_years !== undefined ? parseFloat(newGift.age_years) : 1;
+        newGift.zipcode = newGift.zipcode || '10001';
+        newGift.image = newGift.image || 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=600&q=80';
 
         const result = await collection.insertOne(newGift);
-        return res.status(201).json({ message: "Gift added successfully", gift: newGift, insertedId: result.insertedId });
+        return res.status(201).json({ 
+            message: "Gift added successfully", 
+            gift: newGift, 
+            insertedId: result.insertedId 
+        });
     } catch (error) {
         console.error("Error creating new gift:", error);
         return res.status(500).json({ error: "Failed to create gift item." });
@@ -86,15 +117,19 @@ router.post('/:id/comments', async (req, res) => {
         const id = req.params.id;
         const { author, comment, rating } = req.body;
 
+        if (!comment) {
+            return res.status(400).json({ error: "Comment text is required." });
+        }
+
         const newComment = {
-            author: author || "Anonymous",
+            author: author || "Community Member",
             comment,
             rating: rating || 5,
             createdAt: new Date().toISOString()
         };
 
         const updateResult = await collection.updateOne(
-            { id: id },
+            buildIdQuery(id),
             { $push: { comments: newComment } }
         );
 

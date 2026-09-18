@@ -1,20 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 import './DetailsPage.css';
 
 function DetailsPage() {
   const { id } = useParams();
+  const { userEmail, userName } = useContext(AuthContext);
+
   const [gift, setGift] = useState(null);
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
-  const [authorName, setAuthorName] = useState('');
+  const [authorName, setAuthorName] = useState(userName || '');
   const [sentimentScore, setSentimentScore] = useState(null);
   const [sentimentLabel, setSentimentLabel] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Request / Claim Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [reqName, setReqName] = useState(userName || '');
+  const [reqContact, setReqContact] = useState(userEmail || '');
+  const [reqMessage, setReqMessage] = useState('Hi! I would love to receive this gift item. When would be a convenient time for pickup?');
+  const [reqSuccess, setReqSuccess] = useState(false);
+
   useEffect(() => {
     fetchGiftDetails();
   }, [id]);
+
+  useEffect(() => {
+    if (userName && !authorName) setAuthorName(userName);
+    if (userName && !reqName) setReqName(userName);
+    if (userEmail && !reqContact) setReqContact(userEmail);
+  }, [userName, userEmail]);
 
   const fetchGiftDetails = async () => {
     try {
@@ -84,28 +100,31 @@ function DetailsPage() {
         const newCom = { author: authorName || "Community Member", comment: commentText, rating: 5 };
         setGift(prev => ({ ...prev, comments: [...(prev.comments || []), newCom] }));
         setCommentText('');
-        setAuthorName('');
         setSentimentLabel('');
       }
     } catch (err) {
       const newCom = { author: authorName || "Community Member", comment: commentText, rating: 5 };
       setGift(prev => ({ ...prev, comments: [...(prev.comments || []), newCom] }));
       setCommentText('');
-      setAuthorName('');
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleClaimSubmit = (e) => {
+    e.preventDefault();
+    setReqSuccess(true);
+  };
+
   if (loading) {
-    return <div className="container loading-state">Loading item details...</div>;
+    return <div className="container loading-state" style={{ padding: '4rem 0', textAlign: 'center' }}>Loading item details...</div>;
   }
 
   if (!gift) {
     return (
-      <div className="container error-state">
+      <div className="container error-state" style={{ padding: '4rem 0', textAlign: 'center' }}>
         <h2>Item Not Found</h2>
-        <Link to="/app" className="btn-primary-custom">Back to Gifts</Link>
+        <Link to="/app" className="btn-primary-custom" style={{ marginTop: '1rem' }}>Back to Gifts</Link>
       </div>
     );
   }
@@ -141,8 +160,8 @@ function DetailsPage() {
 
             <div className="contact-donor-box">
               <h3>Interested in this item?</h3>
-              <p>Connect directly with the donor to arrange pickup.</p>
-              <button className="btn-primary-custom btn-claim" onClick={() => alert('Gift request sent to the donor!')}>
+              <p>Connect directly with the donor to arrange free pickup.</p>
+              <button className="btn-primary-custom btn-claim" onClick={() => { setShowModal(true); setReqSuccess(false); }}>
                 <i className="bi bi-gift-fill"></i> Request This Gift
               </button>
             </div>
@@ -157,7 +176,7 @@ function DetailsPage() {
             {gift.comments && gift.comments.length > 0 ? (
               gift.comments.map((c, i) => (
                 <div key={i} className="comment-item">
-                  <div className="comment-avatar">{c.author ? c.author.charAt(0) : 'U'}</div>
+                  <div className="comment-avatar">{c.author ? c.author.charAt(0).toUpperCase() : 'U'}</div>
                   <div className="comment-content">
                     <h4>{c.author}</h4>
                     <p>{c.comment}</p>
@@ -172,7 +191,7 @@ function DetailsPage() {
           {/* Add Comment Form */}
           <form onSubmit={handleAddComment} className="add-comment-card">
             <h3>Leave an Inquiry / Review</h3>
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
               <input
                 type="text"
                 placeholder="Your Name (optional)"
@@ -180,9 +199,9 @@ function DetailsPage() {
                 onChange={(e) => setAuthorName(e.target.value)}
               />
             </div>
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
               <textarea
-                placeholder="Write your question or comment here..."
+                placeholder="Write your question or comment here (e.g., 'Is this table still available? It looks great!')..."
                 rows={3}
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
@@ -197,14 +216,87 @@ function DetailsPage() {
               </div>
             )}
 
-            <button type="submit" className="btn-primary-custom" disabled={submitting}>
-              {submitting ? 'Posting...' : 'Post Comment'}
-            </button>
+            <div>
+              <button type="submit" className="btn-primary-custom" disabled={submitting}>
+                {submitting ? 'Posting...' : 'Post Comment'}
+              </button>
+            </div>
           </form>
         </div>
+
+        {/* Request / Claim Modal */}
+        {showModal && (
+          <div className="modal-overlay" onClick={() => setShowModal(false)}>
+            <div className="modal-content-card" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3><i className="bi bi-gift-fill"></i> Request "{gift.name}"</h3>
+                <button className="btn-close-modal" onClick={() => setShowModal(false)}>
+                  <i className="bi bi-x-lg"></i>
+                </button>
+              </div>
+
+              {reqSuccess ? (
+                <div className="modal-success-state">
+                  <div className="success-icon"><i className="bi bi-check-circle-fill"></i></div>
+                  <h4>Request Sent Successfully!</h4>
+                  <p>The donor for <strong>{gift.name}</strong> has been notified of your interest. They will reach out to you via <strong>{reqContact}</strong> to coordinate local pickup in <strong>Zip {gift.zipcode}</strong>.</p>
+                  <button className="btn-primary-custom" onClick={() => setShowModal(false)} style={{ marginTop: '1rem' }}>
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleClaimSubmit} className="modal-form">
+                  <p className="modal-subtext">Send a message to the donor to arrange pickup details.</p>
+                  
+                  <div className="modal-form-group">
+                    <label>Your Name</label>
+                    <input
+                      type="text"
+                      value={reqName}
+                      onChange={(e) => setReqName(e.target.value)}
+                      required
+                      placeholder="e.g. Alex Johnson"
+                    />
+                  </div>
+
+                  <div className="modal-form-group">
+                    <label>Contact Email / Phone</label>
+                    <input
+                      type="text"
+                      value={reqContact}
+                      onChange={(e) => setReqContact(e.target.value)}
+                      required
+                      placeholder="e.g. alex@example.com or +1 555 123 4567"
+                    />
+                  </div>
+
+                  <div className="modal-form-group">
+                    <label>Message to Donor</label>
+                    <textarea
+                      rows={3}
+                      value={reqMessage}
+                      onChange={(e) => setReqMessage(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="modal-actions">
+                    <button type="button" className="btn-secondary-custom" onClick={() => setShowModal(false)}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn-primary-custom">
+                      <i className="bi bi-send-fill"></i> Send Request
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 export default DetailsPage;
+

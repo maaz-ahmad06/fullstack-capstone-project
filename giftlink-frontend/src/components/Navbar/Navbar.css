@@ -56,6 +56,17 @@
   color: var(--primary);
 }
 
+.donate-link {
+  color: var(--primary) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.donate-link:hover {
+  color: var(--primary-hover) !important;
+}
+
 .nav-actions {
   display: flex;
   align-items: center;

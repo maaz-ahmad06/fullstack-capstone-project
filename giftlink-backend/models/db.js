@@ -48,10 +48,21 @@ const fallbackDb = {
                     }
                 }),
                 findOne: async (query) => {
-                    return inMemoryGifts.find(item => item.id === query.id || item._id === query.id || item.name === query.name) || null;
+                    return inMemoryGifts.find(item => {
+                        if (query.id && item.id === query.id) return true;
+                        if (query._id && (item._id === query._id || item.id === query._id)) return true;
+                        if (query.name && item.name === query.name) return true;
+                        if (query.$or && Array.isArray(query.$or)) {
+                            return query.$or.some(q => 
+                                (q.id && (item.id === q.id || item.id === q.id?.toString())) ||
+                                (q._id && (item._id === q._id || item._id === q._id?.toString() || item.id === q._id || item.id === q._id?.toString()))
+                            );
+                        }
+                        return false;
+                    }) || null;
                 },
                 insertOne: async (doc) => {
-                    inMemoryGifts.push(doc);
+                    inMemoryGifts.unshift(doc);
                     return { insertedId: doc.id || Date.now().toString() };
                 },
                 insertMany: async (docs) => {
@@ -63,7 +74,17 @@ const fallbackDb = {
                     return { deletedCount: 0 };
                 },
                 updateOne: async (filter, update) => {
-                    const item = inMemoryGifts.find(i => i.id === filter.id);
+                    const item = inMemoryGifts.find(i => {
+                        if (filter.id && i.id === filter.id) return true;
+                        if (filter._id && (i._id === filter._id || i.id === filter._id)) return true;
+                        if (filter.$or && Array.isArray(filter.$or)) {
+                            return filter.$or.some(q => 
+                                (q.id && (i.id === q.id || i.id === q.id?.toString())) ||
+                                (q._id && (i._id === q._id || i._id === q._id?.toString() || i.id === q._id || i.id === q._id?.toString()))
+                            );
+                        }
+                        return false;
+                    });
                     if (item) {
                         if (update.$push && update.$push.comments) {
                             item.comments = item.comments || [];

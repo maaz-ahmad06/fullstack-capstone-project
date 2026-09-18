@@ -111,6 +111,9 @@ function MainPage() {
             <a href="#browse-section" className="btn-primary-custom" id="get-started-btn">
               <i className="bi bi-arrow-right-circle-fill"></i> Get Started
             </a>
+            <Link to="/app/add-gift" className="btn-secondary-custom" id="donate-hero-btn" style={{ background: '#eef2ff', borderColor: '#c7d2fe', color: '#4f46e5' }}>
+              <i className="bi bi-plus-circle-fill"></i> Donate an Item
+            </Link>
             <Link to="/app/search" className="btn-secondary-custom" id="browse-btn">
               <i className="bi bi-search"></i> Search Listings
             </Link>

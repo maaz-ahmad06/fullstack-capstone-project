@@ -211,3 +211,137 @@
 .sentiment-positive { background: #dcfce7; color: #15803d; }
 .sentiment-negative { background: #fee2e2; color: #b91c1c; }
 .sentiment-neutral { background: #f1f5f9; color: #475569; }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1.5rem;
+}
+
+.modal-content-card {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  padding: 2rem;
+  box-shadow: var(--shadow-xl);
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-header h3 i {
+  color: var(--primary);
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  padding: 0.35rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.btn-close-modal:hover {
+  color: var(--dark);
+  background: #f1f5f9;
+}
+
+.modal-subtext {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.modal-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.modal-form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.modal-form-group input,
+.modal-form-group textarea {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.modal-form-group input:focus,
+.modal-form-group textarea:focus {
+  border-color: var(--primary);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.modal-success-state {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.success-icon {
+  font-size: 3rem;
+  color: #10b981;
+  margin-bottom: 1rem;
+}
+
+.modal-success-state h4 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 0.75rem;
+}
+
+.modal-success-state p {
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}

@@ -24,6 +24,9 @@ function Navbar() {
           <Link to="/" className="nav-item" id="nav-home">Home</Link>
           <Link to="/app" className="nav-item" id="nav-gifts">Gifts</Link>
           <Link to="/app/search" className="nav-item" id="nav-search">Search</Link>
+          <Link to="/app/add-gift" className="nav-item donate-link" id="nav-donate">
+            <i className="bi bi-plus-circle-fill"></i> Donate Item
+          </Link>
         </div>
 
         <div className="nav-actions">
