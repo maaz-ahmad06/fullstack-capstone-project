@@ -108,9 +108,9 @@ function MainPage() {
           </p>
 
           <div className="hero-actions">
-            <a href="#browse-section" className="btn-primary-custom" id="get-started-btn">
-              <i className="bi bi-arrow-right-circle-fill"></i> Get Started
-            </a>
+            <Link to="/app" className="btn-primary-custom" id="get-started-btn">
+              <i className="bi bi-grid-fill"></i> Explore Gifts
+            </Link>
             <Link to="/app/add-gift" className="btn-secondary-custom" id="donate-hero-btn" style={{ background: '#eef2ff', borderColor: '#c7d2fe', color: '#4f46e5' }}>
               <i className="bi bi-plus-circle-fill"></i> Donate an Item
             </Link>
@@ -167,8 +167,8 @@ function MainPage() {
               <h2 className="section-title">Latest Available Gifts</h2>
               <p className="section-subtitle">Discover free pre-loved items offered by your local community.</p>
             </div>
-            <Link to="/app/search" className="view-all-link">
-              View All <i className="bi bi-arrow-right"></i>
+            <Link to="/app" className="view-all-link">
+              View All Gifts <i className="bi bi-arrow-right"></i>
             </Link>
           </div>
 

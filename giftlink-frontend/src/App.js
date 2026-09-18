@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar/Navbar';
 import MainPage from './components/MainPage/MainPage';
+import GiftsPage from './components/GiftsPage/GiftsPage';
 import LoginPage from './components/LoginPage/LoginPage';
 import RegisterPage from './components/RegisterPage/RegisterPage';
 import DetailsPage from './components/DetailsPage/DetailsPage';
@@ -15,7 +16,8 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<MainPage />} />
-        <Route path="/app" element={<MainPage />} />
+        <Route path="/app" element={<GiftsPage />} />
+        <Route path="/app/gifts" element={<GiftsPage />} />
         <Route path="/app/login" element={<LoginPage />} />
         <Route path="/app/register" element={<RegisterPage />} />
         <Route path="/app/add-gift" element={<AddGiftPage />} />
@@ -28,3 +30,4 @@ function App() {
 }
 
 export default App;
+
