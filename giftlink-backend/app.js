@@ -2,6 +2,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const pino = require('pino');
 const pinoHttp = require('pino-http');
 
@@ -13,10 +15,40 @@ const PORT = process.env.PORT || 3060;
 const logger = pino({ level: 'info' });
 app.use(pinoHttp({ logger }));
 
+// Security Headers with Helmet
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// Global Rate Limiting: 200 requests per 15 minutes per IP
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test',
+    message: { error: 'Too many requests from this IP, please try again after 15 minutes.' }
+});
+
+// Stricter Auth Rate Limiting for Login & Registration (Brute-force protection)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test',
+    message: { error: 'Too many authentication attempts from this IP, please try again after 15 minutes.' }
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Apply rate limiters
+app.use('/api', apiLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Import route handlers
 const giftRoutes = require('./routes/giftRoutes');
