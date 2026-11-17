@@ -1,11 +1,13 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 import './LoginPage.css';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,6 +25,18 @@ function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    if (!password) {
+      setError('Password is required.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -32,14 +46,14 @@ function LoginPage() {
        */
       const existingToken = sessionStorage.getItem('auth-token') || '';
 
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': existingToken ? `Bearer ${existingToken}` : 'Bearer unauthenticated'
+          'Authorization': existingToken ? `Bearer ${existingToken}` : ''
         },
         body: JSON.stringify({
-          email,
+          email: cleanEmail,
           password
         })
       });
@@ -83,24 +97,41 @@ function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               placeholder="you@example.com"
             />
           </div>
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
+            <div className="password-input-wrap">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                className="btn-toggle-password"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex="-1"
+              >
+                <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+              </button>
+            </div>
           </div>
 
           <button type="submit" className="btn-auth-submit" id="login-submit-btn" disabled={loading}>
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loading ? (
+              <span><i className="bi bi-arrow-repeat spin-icon"></i> Signing In...</span>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 
