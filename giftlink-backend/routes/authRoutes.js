@@ -4,6 +4,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const connectToDatabase = require('../models/db');
+const authenticateToken = require('../middleware/authMiddleware');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'giftlink_jwt_super_secret_key_2026';
 
@@ -114,25 +115,15 @@ router.post('/login', async (req, res) => {
 /**
  * 3. Update User Information API
  * PUT /api/auth/update
+ * Protected Route: Requires a valid JWT token in Authorization header
  */
-router.put('/update', async (req, res) => {
+router.put('/update', authenticateToken, async (req, res) => {
     try {
-        // Extract Authorization header or body email
-        const authHeader = req.headers['authorization'];
-        let userEmail = req.body.email;
-
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.split(' ')[1];
-            try {
-                const decoded = jwt.verify(token, JWT_SECRET);
-                userEmail = decoded.email || userEmail;
-            } catch (err) {
-                return res.status(403).json({ error: "Invalid or expired token." });
-            }
-        }
+        // Authenticated user email extracted directly and securely from verified token
+        const userEmail = req.user.email;
 
         if (!userEmail) {
-            return res.status(400).json({ error: "User email or valid Authorization token is required." });
+            return res.status(400).json({ error: "Invalid token payload: Email missing." });
         }
 
         const { firstName, lastName, address } = req.body;
@@ -156,7 +147,12 @@ router.put('/update', async (req, res) => {
 
         return res.status(200).json({
             message: "User details updated successfully",
-            updatedFields: updateFields
+            updatedFields: updateFields,
+            user: {
+                email: userEmail,
+                firstName: firstName || req.user.firstName,
+                lastName: lastName
+            }
         });
     } catch (error) {
         console.error("Error updating user information:", error);
