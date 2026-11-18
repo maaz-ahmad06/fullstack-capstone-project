@@ -21,6 +21,19 @@ try {
 }
 let inMemoryUsers = [];
 
+function matchesGiftFilter(item, filter) {
+    if (filter.id && (item.id === filter.id || item.id === filter.id?.toString())) return true;
+    if (filter._id && (item._id === filter._id || item._id === filter._id?.toString() || item.id === filter._id || item.id === filter._id?.toString())) return true;
+    if (filter.name && item.name === filter.name) return true;
+    if (filter.$or && Array.isArray(filter.$or)) {
+        return filter.$or.some(q =>
+            (q.id && (item.id === q.id || item.id === q.id?.toString())) ||
+            (q._id && (item._id === q._id || item._id === q._id?.toString() || item.id === q._id || item.id === q._id?.toString()))
+        );
+    }
+    return false;
+}
+
 const fallbackDb = {
     collection: (name) => {
         if (name === 'gifts') {
@@ -43,23 +56,18 @@ const fallbackDb = {
                             if (query.age_years && query.age_years.$lte !== undefined) {
                                 if (parseFloat(item.age_years) > query.age_years.$lte) return false;
                             }
+                            if (query.zipcode && item.zipcode !== query.zipcode) {
+                                return false;
+                            }
+                            if (query.donorEmail) {
+                                if ((item.donorEmail || '').toLowerCase() !== query.donorEmail.toLowerCase()) return false;
+                            }
                             return true;
                         });
                     }
                 }),
                 findOne: async (query) => {
-                    return inMemoryGifts.find(item => {
-                        if (query.id && item.id === query.id) return true;
-                        if (query._id && (item._id === query._id || item.id === query._id)) return true;
-                        if (query.name && item.name === query.name) return true;
-                        if (query.$or && Array.isArray(query.$or)) {
-                            return query.$or.some(q => 
-                                (q.id && (item.id === q.id || item.id === q.id?.toString())) ||
-                                (q._id && (item._id === q._id || item._id === q._id?.toString() || item.id === q._id || item.id === q._id?.toString()))
-                            );
-                        }
-                        return false;
-                    }) || null;
+                    return inMemoryGifts.find(item => matchesGiftFilter(item, query)) || null;
                 },
                 insertOne: async (doc) => {
                     inMemoryGifts.unshift(doc);
@@ -73,19 +81,20 @@ const fallbackDb = {
                     inMemoryGifts = [];
                     return { deletedCount: 0 };
                 },
+                deleteOne: async (filter) => {
+                    const idx = inMemoryGifts.findIndex(i => matchesGiftFilter(i, filter));
+                    if (idx !== -1) {
+                        inMemoryGifts.splice(idx, 1);
+                        return { deletedCount: 1 };
+                    }
+                    return { deletedCount: 0 };
+                },
                 updateOne: async (filter, update) => {
-                    const item = inMemoryGifts.find(i => {
-                        if (filter.id && i.id === filter.id) return true;
-                        if (filter._id && (i._id === filter._id || i.id === filter._id)) return true;
-                        if (filter.$or && Array.isArray(filter.$or)) {
-                            return filter.$or.some(q => 
-                                (q.id && (i.id === q.id || i.id === q.id?.toString())) ||
-                                (q._id && (i._id === q._id || i._id === q._id?.toString() || i.id === q._id || i.id === q._id?.toString()))
-                            );
-                        }
-                        return false;
-                    });
+                    const item = inMemoryGifts.find(i => matchesGiftFilter(i, filter));
                     if (item) {
+                        if (update.$set) {
+                            Object.assign(item, update.$set);
+                        }
                         if (update.$push && update.$push.comments) {
                             item.comments = item.comments || [];
                             item.comments.push(update.$push.comments);

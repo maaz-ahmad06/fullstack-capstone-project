@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 import './AddGiftPage.css';
 
 const PRESET_IMAGES = [
@@ -58,15 +59,22 @@ function AddGiftPage() {
       image: imageUrl.trim() || PRESET_IMAGES[0].url,
       description: description.trim(),
       posted_date: Math.floor(Date.now() / 1000),
+      donorName: userName || 'Guest Donor',
       comments: []
     };
 
     try {
-      const response = await fetch('/api/gifts', {
+      const token = sessionStorage.getItem('auth-token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/gifts`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify(newGiftPayload)
       });
 

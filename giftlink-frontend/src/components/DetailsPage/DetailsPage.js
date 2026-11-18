@@ -148,10 +148,28 @@ function DetailsPage() {
               <span className="badge category-badge">{gift.category}</span>
               <span className="badge condition-badge">{gift.condition}</span>
               <span className="badge age-badge">{gift.age_years} yrs old</span>
+              {gift.status && (
+                <span
+                  className="badge"
+                  style={{
+                    background: gift.status === 'Claimed' ? '#e2e8f0' : gift.status === 'Pending' ? '#fef3c7' : '#dcfce7',
+                    color: gift.status === 'Claimed' ? '#475569' : gift.status === 'Pending' ? '#92400e' : '#166534'
+                  }}
+                >
+                  {gift.status}
+                </span>
+              )}
             </div>
 
             <h1 className="item-title">{gift.name}</h1>
-            <p className="item-location"><i className="bi bi-geo-alt-fill"></i> Location: Zip {gift.zipcode}</p>
+            <p className="item-location">
+              <i className="bi bi-geo-alt-fill"></i> Location: Zip {gift.zipcode}
+              {gift.donorName && (
+                <span style={{ marginLeft: '1rem' }}>
+                  <i className="bi bi-person-heart"></i> Listed by: <strong>{gift.donorName}</strong>
+                </span>
+              )}
+            </p>
             
             <div className="item-description-box">
               <h3>Description</h3>
