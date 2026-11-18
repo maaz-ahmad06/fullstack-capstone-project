@@ -50,16 +50,82 @@ function getOptionalUser(req) {
 }
 
 /**
+ * Helper to escape regex special characters for safe MongoDB regex queries
+ */
+function escapeRegex(text) {
+    if (typeof text !== 'string') return '';
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Route: GET /api/gifts
  * Task 5 requirement: routes serving /api/gifts
- * Returns all gift items from MongoDB
+ * Supports optional server-side pagination, filtering & sorting via ?page=&limit=&category=&condition=&search=&sort=
+ * Returns a plain array when called without pagination params for backward compatibility.
  */
 router.get('/', async (req, res) => {
     try {
         const db = await connectToDatabase();
         const collection = db.collection('gifts');
-        const gifts = await collection.find({}).toArray();
-        return res.status(200).json(gifts);
+
+        const isPaginated = req.query.page !== undefined || req.query.limit !== undefined;
+
+        if (!isPaginated) {
+            const gifts = await collection.find({}).toArray();
+            return res.status(200).json(gifts);
+        }
+
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 6));
+
+        // Build safe filter query
+        const query = {};
+        if (req.query.category && req.query.category.trim() !== '' && req.query.category.toLowerCase() !== 'all') {
+            query.category = { $regex: `^${escapeRegex(req.query.category.trim().slice(0, 100))}$`, $options: 'i' };
+        }
+        if (req.query.condition && req.query.condition.trim() !== '' && req.query.condition.toLowerCase() !== 'all') {
+            query.condition = { $regex: `^${escapeRegex(req.query.condition.trim().slice(0, 50))}$`, $options: 'i' };
+        }
+        if (req.query.search && req.query.search.trim() !== '') {
+            const safeSearch = escapeRegex(req.query.search.trim().slice(0, 100));
+            query.$or = [
+                { name: { $regex: safeSearch, $options: 'i' } },
+                { description: { $regex: safeSearch, $options: 'i' } },
+                { category: { $regex: safeSearch, $options: 'i' } }
+            ];
+        }
+
+        // Build sort specification
+        let sortSpec = { posted_date: -1 };
+        if (req.query.sort === 'oldest') {
+            sortSpec = { posted_date: 1 };
+        } else if (req.query.sort === 'name') {
+            sortSpec = { name: 1 };
+        }
+
+        const total = await collection.countDocuments(query);
+        const totalPages = Math.max(1, Math.ceil(total / limit));
+        const safePage = Math.min(page, totalPages);
+        const skip = (safePage - 1) * limit;
+
+        const gifts = await collection
+            .find(query)
+            .sort(sortSpec)
+            .skip(skip)
+            .limit(limit)
+            .toArray();
+
+        return res.status(200).json({
+            gifts,
+            pagination: {
+                total,
+                page: safePage,
+                limit,
+                totalPages,
+                hasNextPage: safePage < totalPages,
+                hasPrevPage: safePage > 1
+            }
+        });
     } catch (error) {
         console.error("Error fetching all gifts:", error);
         return res.status(500).json({ error: "Internal Server Error fetching gift listings." });

@@ -38,35 +38,95 @@ function matchesGiftFilter(item, filter) {
 const fallbackDb = {
     collection: (name) => {
         if (name === 'gifts') {
-            return {
-                find: (query = {}) => ({
-                    toArray: async () => {
-                        return inMemoryGifts.filter(item => {
-                            if (query.category && query.category.$regex) {
-                                const reg = new RegExp(query.category.$regex, query.category.$options || 'i');
-                                if (!reg.test(item.category)) return false;
-                            }
-                            if (query.name && query.name.$regex) {
-                                const reg = new RegExp(query.name.$regex, query.name.$options || 'i');
-                                if (!reg.test(item.name)) return false;
-                            }
-                            if (query.condition && query.condition.$regex) {
-                                const reg = new RegExp(query.condition.$regex, query.condition.$options || 'i');
-                                if (!reg.test(item.condition)) return false;
-                            }
-                            if (query.age_years && query.age_years.$lte !== undefined) {
-                                if (parseFloat(item.age_years) > query.age_years.$lte) return false;
-                            }
-                            if (query.zipcode && item.zipcode !== query.zipcode) {
-                                return false;
-                            }
-                            if (query.donorEmail) {
-                                if ((item.donorEmail || '').toLowerCase() !== query.donorEmail.toLowerCase()) return false;
-                            }
-                            return true;
-                        });
+            const filterGifts = (query = {}) => {
+                return inMemoryGifts.filter(item => {
+                    if (query.category && query.category.$regex) {
+                        const reg = new RegExp(query.category.$regex, query.category.$options || 'i');
+                        if (!reg.test(item.category || '')) return false;
                     }
-                }),
+                    if (query.name && query.name.$regex) {
+                        const reg = new RegExp(query.name.$regex, query.name.$options || 'i');
+                        if (!reg.test(item.name || '')) return false;
+                    }
+                    if (query.condition && query.condition.$regex) {
+                        const reg = new RegExp(query.condition.$regex, query.condition.$options || 'i');
+                        if (!reg.test(item.condition || '')) return false;
+                    }
+                    if (query.age_years && query.age_years.$lte !== undefined) {
+                        if (parseFloat(item.age_years) > query.age_years.$lte) return false;
+                    }
+                    if (query.zipcode && item.zipcode !== query.zipcode) {
+                        return false;
+                    }
+                    if (query.donorEmail) {
+                        if ((item.donorEmail || '').toLowerCase() !== query.donorEmail.toLowerCase()) return false;
+                    }
+                    if (query.$or && Array.isArray(query.$or)) {
+                        const matchedOr = query.$or.some(cond => {
+                            return Object.entries(cond).every(([field, val]) => {
+                                if (val && val.$regex) {
+                                    const reg = new RegExp(val.$regex, val.$options || 'i');
+                                    return reg.test(item[field] || '');
+                                }
+                                return item[field] === val;
+                            });
+                        });
+                        if (!matchedOr) return false;
+                    }
+                    return true;
+                });
+            };
+
+            return {
+                countDocuments: async (query = {}) => {
+                    return filterGifts(query).length;
+                },
+                find: (query = {}) => {
+                    let sortSpec = null;
+                    let skipCount = 0;
+                    let limitCount = null;
+
+                    const cursor = {
+                        sort: (spec) => {
+                            sortSpec = spec;
+                            return cursor;
+                        },
+                        skip: (n) => {
+                            skipCount = Math.max(0, Number(n) || 0);
+                            return cursor;
+                        },
+                        limit: (n) => {
+                            limitCount = Math.max(0, Number(n) || 0);
+                            return cursor;
+                        },
+                        toArray: async () => {
+                            let results = [...filterGifts(query)];
+                            if (sortSpec && typeof sortSpec === 'object') {
+                                const [field, dir] = Object.entries(sortSpec)[0] || [];
+                                if (field) {
+                                    results.sort((a, b) => {
+                                        const valA = a[field] ?? '';
+                                        const valB = b[field] ?? '';
+                                        if (typeof valA === 'string' || typeof valB === 'string') {
+                                            return dir === -1
+                                                ? String(valB).localeCompare(String(valA))
+                                                : String(valA).localeCompare(String(valB));
+                                        }
+                                        return dir === -1 ? (valB - valA) : (valA - valB);
+                                    });
+                                }
+                            }
+                            if (skipCount > 0) {
+                                results = results.slice(skipCount);
+                            }
+                            if (limitCount !== null) {
+                                results = results.slice(0, limitCount);
+                            }
+                            return results;
+                        }
+                    };
+                    return cursor;
+                },
                 findOne: async (query) => {
                     return inMemoryGifts.find(item => matchesGiftFilter(item, query)) || null;
                 },
