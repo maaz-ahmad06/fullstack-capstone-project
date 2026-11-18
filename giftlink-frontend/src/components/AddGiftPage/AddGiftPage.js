@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -29,9 +29,88 @@ function AddGiftPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // File Upload State
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [uploadSuccess, setUploadSuccess] = useState('');
+  const [dragActive, setDragActive] = useState(false);
+
   const handlePresetSelect = (preset) => {
     setImageUrl(preset.url);
+    setUploadSuccess('');
+    setUploadError('');
     if (preset.cat) setCategory(preset.cat);
+  };
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    setUploadError('');
+    setUploadSuccess('');
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError('Invalid file type. Only JPG, PNG, WEBP, or GIF images are allowed.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('File is too large. Maximum allowed size is 5MB.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Image upload failed.');
+      }
+
+      const finalUrl = `${API_BASE_URL}${data.imageUrl}`;
+      setImageUrl(finalUrl);
+      setUploadSuccess(`Uploaded: ${file.name}`);
+    } catch (err) {
+      setUploadError(err.message || 'Could not upload photo. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileInputChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -209,16 +288,67 @@ function AddGiftPage() {
               </div>
             </div>
 
-            {/* Right Section: Image & Preview */}
+            {/* Right Section: Image Upload & Preview */}
             <div className="form-column">
+              <div className="form-group-custom" style={{ marginBottom: '0.5rem' }}>
+                <label>Upload Item Photo from Device</label>
+                <div
+                  className={`upload-dropzone ${dragActive ? 'drag-active' : ''} ${uploading ? 'uploading' : ''}`}
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    id="gift-image-file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={handleFileInputChange}
+                    style={{ display: 'none' }}
+                  />
+                  <i className={`bi ${uploading ? 'bi-cloud-arrow-up-fill' : 'bi-cloud-upload'} upload-dropzone-icon`}></i>
+                  <div className="upload-dropzone-title">
+                    {uploading ? 'Uploading photo...' : 'Click to upload or drag & drop photo'}
+                  </div>
+                  <div className="upload-dropzone-sub">
+                    Supports JPG, PNG, WEBP, GIF (Max 5MB)
+                  </div>
+
+                  {uploadSuccess && (
+                    <div className="upload-status-badge upload-status-success">
+                      <i className="bi bi-check-circle-fill"></i> {uploadSuccess}
+                    </div>
+                  )}
+                  {uploadError && (
+                    <div className="upload-status-badge upload-status-error">
+                      <i className="bi bi-exclamation-triangle-fill"></i> {uploadError}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="upload-or-divider">or paste photo URL</div>
+
               <div className="form-group-custom">
                 <label htmlFor="gift-image">Item Photo URL</label>
                 <input
-                  type="url"
+                  type="text"
                   id="gift-image"
-                  placeholder="https://images.unsplash.com/..."
+                  placeholder="https://images.unsplash.com/... or /uploads/..."
                   value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    setUploadSuccess('');
+                  }}
                 />
               </div>
 

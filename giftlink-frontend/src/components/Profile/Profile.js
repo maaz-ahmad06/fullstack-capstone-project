@@ -713,7 +713,7 @@ function Profile() {
                 <div className="form-group">
                   <label>Image URL</label>
                   <input
-                    type="url"
+                    type="text"
                     value={editingGift.image}
                     onChange={(e) => setEditingGift({ ...editingGift, image: e.target.value })}
                   />

@@ -1,6 +1,7 @@
 // app.js
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -50,12 +51,16 @@ app.use('/api', apiLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
+// Serve uploaded item images statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Import route handlers
 const giftRoutes = require('./routes/giftRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const authRoutes = require('./routes/authRoutes');
 const sentimentRoutes = require('./sentiment/index');
 const requestRoutes = require('./routes/requestRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 // Mount routes
 app.use('/api/gifts', giftRoutes);
@@ -64,6 +69,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/sentiment', sentimentRoutes);
 app.use('/api/requests', requestRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
