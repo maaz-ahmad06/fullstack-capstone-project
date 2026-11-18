@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 import './DetailsPage.css';
 
 function DetailsPage() {
   const { id } = useParams();
-  const { userEmail, userName } = useContext(AuthContext);
+  const { isLoggedIn, userEmail, userName } = useContext(AuthContext);
 
   const [gift, setGift] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,6 +22,8 @@ function DetailsPage() {
   const [reqContact, setReqContact] = useState(userEmail || '');
   const [reqMessage, setReqMessage] = useState('Hi! I would love to receive this gift item. When would be a convenient time for pickup?');
   const [reqSuccess, setReqSuccess] = useState(false);
+  const [reqSubmitting, setReqSubmitting] = useState(false);
+  const [reqError, setReqError] = useState('');
 
   useEffect(() => {
     fetchGiftDetails();
@@ -34,7 +37,7 @@ function DetailsPage() {
 
   const fetchGiftDetails = async () => {
     try {
-      const response = await fetch(`/api/gifts/${id}`);
+      const response = await fetch(`${API_BASE_URL}/api/gifts/${id}`);
       if (response.ok) {
         const data = await response.json();
         setGift(data);
@@ -65,7 +68,7 @@ function DetailsPage() {
   const handleSentimentCheck = async () => {
     if (!commentText.trim()) return;
     try {
-      const res = await fetch('/api/sentiment/analyze', {
+      const res = await fetch(`${API_BASE_URL}/api/sentiment/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sentence: commentText })
@@ -86,7 +89,7 @@ function DetailsPage() {
 
     setSubmitting(true);
     try {
-      const response = await fetch(`/api/gifts/${id}/comments`, {
+      const response = await fetch(`${API_BASE_URL}/api/gifts/${id}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -111,9 +114,46 @@ function DetailsPage() {
     }
   };
 
-  const handleClaimSubmit = (e) => {
+  const handleClaimSubmit = async (e) => {
     e.preventDefault();
-    setReqSuccess(true);
+    setReqError('');
+    setReqSubmitting(true);
+
+    try {
+      const token = sessionStorage.getItem('auth-token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/requests`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          giftId: gift.id || gift._id || id,
+          requesterName: reqName.trim(),
+          requesterContact: reqContact.trim(),
+          message: reqMessage.trim()
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Could not submit request.');
+      }
+
+      setGift(prev => ({
+        ...prev,
+        status: data.giftStatus || 'Pending'
+      }));
+      setReqSuccess(true);
+    } catch (err) {
+      setReqError(err.message || 'Failed to send request. Please try again.');
+    } finally {
+      setReqSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -177,11 +217,42 @@ function DetailsPage() {
             </div>
 
             <div className="contact-donor-box">
-              <h3>Interested in this item?</h3>
-              <p>Connect directly with the donor to arrange free pickup.</p>
-              <button className="btn-primary-custom btn-claim" onClick={() => { setShowModal(true); setReqSuccess(false); }}>
-                <i className="bi bi-gift-fill"></i> Request This Gift
-              </button>
+              {gift.status === 'Claimed' ? (
+                <>
+                  <h3>Item Already Claimed</h3>
+                  <p>This gift has already been claimed by a community member.</p>
+                  <button className="btn-secondary-custom" disabled style={{ opacity: 0.7, cursor: 'not-allowed' }}>
+                    <i className="bi bi-check-circle-fill"></i> Claimed
+                  </button>
+                </>
+              ) : isLoggedIn && userEmail && gift.donorEmail && userEmail.toLowerCase() === gift.donorEmail.toLowerCase() ? (
+                <>
+                  <h3>This is your listing</h3>
+                  <p>Manage incoming pickup requests and edit this item from your profile dashboard.</p>
+                  <Link to="/app/profile" className="btn-primary-custom btn-claim">
+                    <i className="bi bi-inbox-fill"></i> Manage Listing & Requests
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <h3>Interested in this item?</h3>
+                  <p>
+                    {gift.status === 'Pending'
+                      ? 'This item currently has an active request, but you can still submit your interest.'
+                      : 'Connect directly with the donor to arrange free pickup.'}
+                  </p>
+                  <button
+                    className="btn-primary-custom btn-claim"
+                    onClick={() => {
+                      setShowModal(true);
+                      setReqSuccess(false);
+                      setReqError('');
+                    }}
+                  >
+                    <i className="bi bi-gift-fill"></i> Request This Gift
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -257,14 +328,37 @@ function DetailsPage() {
                 <div className="modal-success-state">
                   <div className="success-icon"><i className="bi bi-check-circle-fill"></i></div>
                   <h4>Request Sent Successfully!</h4>
-                  <p>The donor for <strong>{gift.name}</strong> has been notified of your interest. They will reach out to you via <strong>{reqContact}</strong> to coordinate local pickup in <strong>Zip {gift.zipcode}</strong>.</p>
-                  <button className="btn-primary-custom" onClick={() => setShowModal(false)} style={{ marginTop: '1rem' }}>
-                    Done
-                  </button>
+                  <p>Your request for <strong>{gift.name}</strong> has been saved and sent to the donor. They will reach out to you via <strong>{reqContact}</strong> to coordinate pickup in <strong>Zip {gift.zipcode}</strong>.</p>
+                  <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+                    {isLoggedIn && (
+                      <Link to="/app/profile" className="btn-secondary-custom" onClick={() => setShowModal(false)}>
+                        Track in Profile
+                      </Link>
+                    )}
+                    <button className="btn-primary-custom" onClick={() => setShowModal(false)}>
+                      Done
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleClaimSubmit} className="modal-form">
                   <p className="modal-subtext">Send a message to the donor to arrange pickup details.</p>
+
+                  {reqError && (
+                    <div
+                      style={{
+                        background: '#fee2e2',
+                        color: '#991b1b',
+                        borderLeft: '4px solid #ef4444',
+                        padding: '0.75rem 1rem',
+                        borderRadius: '8px',
+                        marginBottom: '1rem',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      <i className="bi bi-exclamation-triangle-fill"></i> {reqError}
+                    </div>
+                  )}
                   
                   <div className="modal-form-group">
                     <label>Your Name</label>
@@ -302,8 +396,8 @@ function DetailsPage() {
                     <button type="button" className="btn-secondary-custom" onClick={() => setShowModal(false)}>
                       Cancel
                     </button>
-                    <button type="submit" className="btn-primary-custom">
-                      <i className="bi bi-send-fill"></i> Send Request
+                    <button type="submit" className="btn-primary-custom" disabled={reqSubmitting}>
+                      <i className="bi bi-send-fill"></i> {reqSubmitting ? 'Sending...' : 'Send Request'}
                     </button>
                   </div>
                 </form>

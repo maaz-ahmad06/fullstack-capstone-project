@@ -32,6 +32,14 @@ function Profile() {
   const [editingGift, setEditingGift] = useState(null);
   const [editSaving, setEditSaving] = useState(false);
 
+  // Requests state (Incoming & Sent)
+  const [receivedRequests, setReceivedRequests] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [requestsMsg, setRequestsMsg] = useState('');
+  const [requestsError, setRequestsError] = useState('');
+  const [updatingReqId, setUpdatingReqId] = useState(null);
+
   useEffect(() => {
     setEmail(userEmail || sessionStorage.getItem('email') || '');
     if (userName) {
@@ -44,6 +52,7 @@ function Profile() {
   useEffect(() => {
     if (isLoggedIn) {
       fetchMyGifts();
+      fetchRequests();
     }
   }, [isLoggedIn]);
 
@@ -69,6 +78,62 @@ function Profile() {
       setGiftsError('Network error while loading your gifts.');
     } finally {
       setGiftsLoading(false);
+    }
+  };
+
+  const fetchRequests = async () => {
+    setRequestsLoading(true);
+    setRequestsError('');
+    try {
+      const token = sessionStorage.getItem('auth-token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+
+      const [recvRes, sentRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/requests/received`, { headers }),
+        fetch(`${API_BASE_URL}/api/requests/sent`, { headers })
+      ]);
+
+      if (recvRes.ok) {
+        setReceivedRequests(await recvRes.json());
+      }
+      if (sentRes.ok) {
+        setSentRequests(await sentRes.json());
+      }
+    } catch (err) {
+      setRequestsError('Network error while loading gift requests.');
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+
+  const handleRequestAction = async (reqId, newStatus) => {
+    setUpdatingReqId(reqId);
+    setRequestsError('');
+    setRequestsMsg('');
+
+    try {
+      const token = sessionStorage.getItem('auth-token');
+      const res = await fetch(`${API_BASE_URL}/api/requests/${reqId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update request status.');
+      }
+
+      setRequestsMsg(`Request ${newStatus.toLowerCase()} successfully!`);
+      // Refresh both incoming requests and listed gifts so statuses stay synced
+      await Promise.all([fetchRequests(), fetchMyGifts()]);
+    } catch (err) {
+      setRequestsError(err.message || 'Could not update request.');
+    } finally {
+      setUpdatingReqId(null);
     }
   };
 
@@ -192,6 +257,8 @@ function Profile() {
     }
   };
 
+  const pendingIncomingCount = receivedRequests.filter(r => r.status === 'Pending').length;
+
   if (!isLoggedIn) {
     return (
       <div className="profile-wrapper">
@@ -201,7 +268,7 @@ function Profile() {
               <div className="profile-avatar"><i className="bi bi-lock-fill"></i></div>
               <h2>Sign In Required</h2>
               <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                Please log in to manage your profile details and donated gift listings.
+                Please log in to manage your profile details, donated gifts, and pickup requests.
               </p>
               <Link to="/app/login" className="btn-primary-custom">
                 <i className="bi bi-box-arrow-in-right"></i> Go to Login
@@ -221,7 +288,7 @@ function Profile() {
             <div className="profile-header">
               <div className="profile-avatar"><i className="bi bi-person-fill"></i></div>
               <h2>{userName || 'My Profile'}</h2>
-              <p>Manage your account details and track your donated items.</p>
+              <p>Manage your account details, donated listings, and community requests.</p>
             </div>
 
             {/* Dashboard Tabs */}
@@ -242,6 +309,26 @@ function Profile() {
               >
                 <i className="bi bi-gift"></i> My Listed Gifts
                 <span className="tab-count-badge">{myGifts.length}</span>
+              </button>
+              <button
+                type="button"
+                className={`profile-tab-btn ${activeTab === 'incoming' ? 'active' : ''}`}
+                onClick={() => { setActiveTab('incoming'); fetchRequests(); }}
+                id="tab-incoming-requests"
+              >
+                <i className="bi bi-inbox"></i> Incoming Requests
+                <span className={`tab-count-badge ${pendingIncomingCount > 0 ? 'tab-count-alert' : ''}`}>
+                  {pendingIncomingCount > 0 ? `${pendingIncomingCount} new` : receivedRequests.length}
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`profile-tab-btn ${activeTab === 'sent' ? 'active' : ''}`}
+                onClick={() => { setActiveTab('sent'); fetchRequests(); }}
+                id="tab-sent-requests"
+              >
+                <i className="bi bi-send"></i> My Requests
+                <span className="tab-count-badge">{sentRequests.length}</span>
               </button>
             </div>
 
@@ -374,6 +461,154 @@ function Profile() {
                             >
                               <i className="bi bi-trash3"></i> Delete
                             </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 3: Incoming Requests (Donor Management) */}
+            {activeTab === 'incoming' && (
+              <div>
+                <div className="my-gifts-header">
+                  <h3>Incoming Pickup Requests ({receivedRequests.length})</h3>
+                </div>
+
+                {requestsMsg && <div className="alert-info"><i className="bi bi-check-circle-fill"></i> {requestsMsg}</div>}
+                {requestsError && <div className="alert-error-box"><i className="bi bi-exclamation-triangle-fill"></i> {requestsError}</div>}
+
+                {requestsLoading ? (
+                  <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0' }}>
+                    Loading incoming requests...
+                  </p>
+                ) : receivedRequests.length === 0 ? (
+                  <div className="empty-my-gifts">
+                    <i className="bi bi-inbox"></i>
+                    <h4>No incoming requests yet</h4>
+                    <p>When community members request one of your donated items, you can review and accept them here.</p>
+                  </div>
+                ) : (
+                  <div className="my-gifts-list">
+                    {receivedRequests.map((reqItem) => {
+                      const reqId = reqItem.id || reqItem._id;
+                      const statusClass = `status-${(reqItem.status || 'Pending').toLowerCase()}`;
+                      return (
+                        <div key={reqId} className="my-gift-row">
+                          <img
+                            src={reqItem.giftImage}
+                            alt={reqItem.giftName}
+                            className="my-gift-thumb"
+                            onError={(e) => {
+                              e.target.src = 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=600&q=80';
+                            }}
+                          />
+                          <div className="my-gift-info">
+                            <div className="my-gift-title-row">
+                              <h4>{reqItem.giftName}</h4>
+                              <span className={`status-pill ${statusClass}`}>{reqItem.status}</span>
+                            </div>
+                            <div className="my-gift-meta">
+                              <span><i className="bi bi-person"></i> From: <strong>{reqItem.requesterName}</strong></span>
+                              <span><i className="bi bi-envelope"></i> Contact: {reqItem.requesterContact}</span>
+                            </div>
+                            <div className="request-message-quote">
+                              "{reqItem.message}"
+                            </div>
+                          </div>
+                          <div className="my-gift-actions">
+                            {reqItem.status === 'Pending' ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn-action-sm btn-action-accept"
+                                  disabled={updatingReqId === reqId}
+                                  onClick={() => handleRequestAction(reqId, 'Accepted')}
+                                >
+                                  <i className="bi bi-check-lg"></i> Accept
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-action-sm btn-action-reject"
+                                  disabled={updatingReqId === reqId}
+                                  onClick={() => handleRequestAction(reqId, 'Rejected')}
+                                >
+                                  <i className="bi bi-x-lg"></i> Reject
+                                </button>
+                              </>
+                            ) : (
+                              <Link to={`/app/product/${reqItem.giftId}`} className="btn-action-sm">
+                                <i className="bi bi-eye"></i> View Item
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 4: My Sent Requests */}
+            {activeTab === 'sent' && (
+              <div>
+                <div className="my-gifts-header">
+                  <h3>Gifts I Requested ({sentRequests.length})</h3>
+                  <Link to="/app" className="btn-secondary-custom">
+                    <i className="bi bi-grid-fill"></i> Browse More Gifts
+                  </Link>
+                </div>
+
+                {requestsError && <div className="alert-error-box"><i className="bi bi-exclamation-triangle-fill"></i> {requestsError}</div>}
+
+                {requestsLoading ? (
+                  <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0' }}>
+                    Loading your requests...
+                  </p>
+                ) : sentRequests.length === 0 ? (
+                  <div className="empty-my-gifts">
+                    <i className="bi bi-send-check"></i>
+                    <h4>You haven't requested any gifts yet</h4>
+                    <p>Explore available community gifts and submit a pickup request.</p>
+                    <Link to="/app" className="btn-primary-custom" style={{ marginTop: '1rem' }}>
+                      <i className="bi bi-search"></i> Explore Gifts
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="my-gifts-list">
+                    {sentRequests.map((reqItem) => {
+                      const reqId = reqItem.id || reqItem._id;
+                      const statusClass = `status-${(reqItem.status || 'Pending').toLowerCase()}`;
+                      return (
+                        <div key={reqId} className="my-gift-row">
+                          <img
+                            src={reqItem.giftImage}
+                            alt={reqItem.giftName}
+                            className="my-gift-thumb"
+                            onError={(e) => {
+                              e.target.src = 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=600&q=80';
+                            }}
+                          />
+                          <div className="my-gift-info">
+                            <div className="my-gift-title-row">
+                              <h4>{reqItem.giftName}</h4>
+                              <span className={`status-pill ${statusClass}`}>{reqItem.status}</span>
+                            </div>
+                            <div className="my-gift-meta">
+                              <span><i className="bi bi-person-heart"></i> Donor: {reqItem.donorName}</span>
+                              <span><i className="bi bi-geo-alt"></i> Zip {reqItem.giftZipcode}</span>
+                            </div>
+                            <div className="request-message-quote">
+                              "{reqItem.message}"
+                            </div>
+                          </div>
+                          <div className="my-gift-actions">
+                            <Link to={`/app/product/${reqItem.giftId}`} className="btn-action-sm">
+                              <i className="bi bi-eye"></i> View Item
+                            </Link>
                           </div>
                         </div>
                       );

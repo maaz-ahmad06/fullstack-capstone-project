@@ -55,6 +55,7 @@ const giftRoutes = require('./routes/giftRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const authRoutes = require('./routes/authRoutes');
 const sentimentRoutes = require('./sentiment/index');
+const requestRoutes = require('./routes/requestRoutes');
 
 // Mount routes
 app.use('/api/gifts', giftRoutes);
@@ -62,6 +63,7 @@ app.use('/api/gifts', giftRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/sentiment', sentimentRoutes);
+app.use('/api/requests', requestRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

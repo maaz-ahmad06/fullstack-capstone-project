@@ -20,6 +20,7 @@ try {
     inMemoryGifts = [];
 }
 let inMemoryUsers = [];
+let inMemoryRequests = [];
 
 function matchesGiftFilter(item, filter) {
     if (filter.id && (item.id === filter.id || item.id === filter.id?.toString())) return true;
@@ -124,6 +125,64 @@ const fallbackDb = {
                         return { matchedCount: 1 };
                     }
                     return { matchedCount: 0 };
+                }
+            };
+        }
+        if (name === 'requests') {
+            const matchesComplexReq = (item, query = {}) => {
+                for (const [key, val] of Object.entries(query)) {
+                    if (key === '$or' && Array.isArray(val)) {
+                        const matchedOr = val.some(q =>
+                            (q.id && (item.id === q.id || item.id === q.id?.toString())) ||
+                            (q._id && (item._id === q._id || item._id === q._id?.toString() || item.id === q._id || item.id === q._id?.toString()))
+                        );
+                        if (!matchedOr) return false;
+                    } else if (val && typeof val === 'object' && '$ne' in val) {
+                        if (item[key] === val.$ne || item[key]?.toString() === val.$ne?.toString()) return false;
+                    } else if (key === 'donorEmail' || key === 'requesterEmail') {
+                        if ((item[key] || '').toLowerCase() !== (val || '').toLowerCase()) return false;
+                    } else {
+                        if (item[key] !== val && item[key]?.toString() !== val?.toString()) return false;
+                    }
+                }
+                return true;
+            };
+            return {
+                find: (query = {}) => ({
+                    sort: () => ({
+                        toArray: async () => inMemoryRequests.filter(item => matchesComplexReq(item, query))
+                    }),
+                    toArray: async () => inMemoryRequests.filter(item => matchesComplexReq(item, query))
+                }),
+                findOne: async (query) => {
+                    return inMemoryRequests.find(item => matchesComplexReq(item, query)) || null;
+                },
+                insertOne: async (doc) => {
+                    const newReq = { ...doc, _id: doc.id || Date.now().toString() };
+                    inMemoryRequests.unshift(newReq);
+                    return { insertedId: newReq._id };
+                },
+                updateOne: async (filter, update) => {
+                    const reqItem = inMemoryRequests.find(item => matchesComplexReq(item, filter));
+                    if (reqItem) {
+                        if (update.$set) {
+                            Object.assign(reqItem, update.$set);
+                        }
+                        return { matchedCount: 1, modifiedCount: 1 };
+                    }
+                    return { matchedCount: 0, modifiedCount: 0 };
+                },
+                updateMany: async (filter, update) => {
+                    let count = 0;
+                    inMemoryRequests.forEach(item => {
+                        if (matchesComplexReq(item, filter)) {
+                            if (update.$set) {
+                                Object.assign(item, update.$set);
+                            }
+                            count++;
+                        }
+                    });
+                    return { matchedCount: count, modifiedCount: count };
                 }
             };
         }

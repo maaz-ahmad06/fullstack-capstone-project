@@ -49,7 +49,8 @@
 /* Dashboard Tabs */
 .profile-tabs {
   display: flex;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-bottom: 1.5rem;
   border-bottom: 2px solid var(--border);
   padding-bottom: 0;
@@ -207,6 +208,51 @@
 .status-claimed {
   background: #e2e8f0;
   color: #475569;
+}
+
+.status-accepted {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.request-message-quote {
+  margin-top: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  background: #f8fafc;
+  border-left: 3px solid #c7d2fe;
+  border-radius: 6px;
+  font-size: 0.87rem;
+  color: #334155;
+}
+
+.btn-action-accept {
+  color: #166534;
+  border-color: #86efac;
+  background: #dcfce7;
+}
+
+.btn-action-accept:hover:not(:disabled) {
+  background: #bbf7d0;
+}
+
+.btn-action-reject {
+  color: #dc2626;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.btn-action-reject:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.tab-count-alert {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .my-gift-meta {
