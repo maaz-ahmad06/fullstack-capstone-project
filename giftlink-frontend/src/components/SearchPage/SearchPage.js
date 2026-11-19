@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import './SearchPage.css';
 
 function SearchPage() {
@@ -26,7 +27,7 @@ function SearchPage() {
       if (condition && condition !== 'all') queryParams.append('condition', condition);
       if (ageYears) queryParams.append('age_years', ageYears);
 
-      const res = await fetch(`/api/search?${queryParams.toString()}`);
+      const res = await fetch(`${API_BASE_URL}/api/search?${queryParams.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setResults(data);
@@ -117,7 +118,21 @@ function SearchPage() {
           <h2>Matching Results ({results.length})</h2>
 
           {loading ? (
-            <div className="loading-state">Searching matching items...</div>
+            <div className="gifts-grid">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="skeleton-card">
+                  <div className="skeleton-img"></div>
+                  <div className="skeleton-body">
+                    <div className="skeleton-line skeleton-title"></div>
+                    <div className="skeleton-line"></div>
+                    <div className="skeleton-line skeleton-meta"></div>
+                  </div>
+                  <div className="skeleton-footer">
+                    <div className="skeleton-line skeleton-btn"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : results.length > 0 ? (
             <div className="gifts-grid">
               {results.map((gift) => (

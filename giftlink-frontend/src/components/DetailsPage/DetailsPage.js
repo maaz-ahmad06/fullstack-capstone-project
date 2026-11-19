@@ -157,7 +157,20 @@ function DetailsPage() {
   };
 
   if (loading) {
-    return <div className="container loading-state" style={{ padding: '4rem 0', textAlign: 'center' }}>Loading item details...</div>;
+    return (
+      <div className="container" style={{ padding: '3rem 0' }}>
+        <div className="skeleton-details-grid">
+          <div className="skeleton-line" style={{ height: '380px', borderRadius: '12px' }}></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="skeleton-line" style={{ width: '40%', height: '24px' }}></div>
+            <div className="skeleton-line skeleton-title" style={{ width: '80%', height: '36px' }}></div>
+            <div className="skeleton-line" style={{ width: '50%', height: '20px' }}></div>
+            <div className="skeleton-line" style={{ width: '100%', height: '80px', borderRadius: '8px' }}></div>
+            <div className="skeleton-line" style={{ width: '100%', height: '120px', borderRadius: '8px' }}></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!gift) {

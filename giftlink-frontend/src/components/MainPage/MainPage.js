@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import './MainPage.css';
 
 function MainPage() {
@@ -14,10 +15,11 @@ function MainPage() {
 
   const fetchGifts = async () => {
     try {
-      const response = await fetch('/api/gifts');
+      const response = await fetch(`${API_BASE_URL}/api/gifts`);
       if (response.ok) {
         const data = await response.json();
-        setGifts(data);
+        // Support both paginated { gifts: [...] } and plain array formats
+        setGifts(Array.isArray(data) ? data.slice(0, 4) : (data.gifts || []).slice(0, 4));
       } else {
         throw new Error('API failed');
       }
@@ -173,9 +175,21 @@ function MainPage() {
           </div>
 
           {loading ? (
-            <div className="loading-spinner">
-              <div className="spinner"></div>
-              <p>Loading available gifts...</p>
+            <div className="gifts-grid">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="skeleton-card">
+                  <div className="skeleton-img skeleton-shimmer"></div>
+                  <div className="skeleton-body">
+                    <div className="skeleton-title skeleton-line skeleton-shimmer"></div>
+                    <div className="skeleton-line skeleton-shimmer" style={{ width: '90%' }}></div>
+                    <div className="skeleton-line skeleton-shimmer" style={{ width: '60%' }}></div>
+                    <div className="skeleton-meta skeleton-line skeleton-shimmer"></div>
+                  </div>
+                  <div className="skeleton-footer">
+                    <div className="skeleton-btn skeleton-shimmer"></div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="gifts-grid" id="gifts-grid">

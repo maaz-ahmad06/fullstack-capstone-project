@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 import './RegisterPage.css';
 
 function RegisterPage() {
@@ -7,6 +8,7 @@ function RegisterPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -14,6 +16,23 @@ function RegisterPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setError('Please provide a valid email address.');
+      return;
+    }
+
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('First and last name are required.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -21,16 +40,16 @@ function RegisterPage() {
        * Task 9 Requirement:
        * fetch request containing the required method and header attributes
        */
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
         body: JSON.stringify({
-          firstName,
-          lastName,
-          email,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: cleanEmail,
           password
         })
       });
@@ -42,7 +61,7 @@ function RegisterPage() {
       }
 
       // Registration successful, navigate to login page
-      navigate('/app/login', { state: { message: 'Registration successful! Please login.' } });
+      navigate('/app/login', { state: { message: 'Registration successful! Please login with your credentials.' } });
     } catch (err) {
       setError(err.message || 'An error occurred during registration.');
     } finally {
@@ -71,6 +90,7 @@ function RegisterPage() {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
+                autoComplete="given-name"
                 placeholder="John"
               />
             </div>
@@ -82,6 +102,7 @@ function RegisterPage() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
+                autoComplete="family-name"
                 placeholder="Doe"
               />
             </div>
@@ -95,25 +116,42 @@ function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               placeholder="you@example.com"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              minLength={6}
-            />
+            <label htmlFor="password">Password (min 6 characters)</label>
+            <div className="password-input-wrap">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+                placeholder="••••••••"
+                minLength={6}
+              />
+              <button
+                type="button"
+                className="btn-toggle-password"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex="-1"
+              >
+                <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+              </button>
+            </div>
           </div>
 
           <button type="submit" className="btn-auth-submit" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Register'}
+            {loading ? (
+              <span><i className="bi bi-arrow-repeat spin-icon"></i> Creating Account...</span>
+            ) : (
+              'Register'
+            )}
           </button>
         </form>
 

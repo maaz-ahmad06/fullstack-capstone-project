@@ -310,9 +310,21 @@ function GiftsPage() {
         </div>
 
         {loading ? (
-          <div className="gifts-loading">
-            <div className="spinner"></div>
-            <p>Loading available gift listings...</p>
+          <div className="gifts-catalog-grid">
+            {Array.from({ length: limit || 6 }).map((_, i) => (
+              <div key={i} className="skeleton-card">
+                <div className="skeleton-img skeleton-shimmer"></div>
+                <div className="skeleton-body">
+                  <div className="skeleton-title skeleton-line skeleton-shimmer"></div>
+                  <div className="skeleton-line skeleton-shimmer" style={{ width: '90%' }}></div>
+                  <div className="skeleton-line skeleton-shimmer" style={{ width: '60%' }}></div>
+                  <div className="skeleton-meta skeleton-line skeleton-shimmer"></div>
+                </div>
+                <div className="skeleton-footer">
+                  <div className="skeleton-btn skeleton-shimmer"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : gifts.length > 0 ? (
           <>
