@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # Database Service
+  mongodb:
+    image: mongo:latest
+    container_name: giftlink-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - giftlink-network
+
+  # Backend Express API Service
+  backend:
+    build:
+      context: ./giftlink-backend
+      dockerfile: Dockerfile
+    container_name: giftlink-backend
+    restart: always
+    ports:
+      - "3060:3060"
+    environment:
+      - PORT=3060
+      - MONGO_URL=mongodb://mongodb:27017/giftlinkdb
+      - JWT_SECRET=production_docker_jwt_secret_key_2026
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+    volumes:
+      - uploads-data:/usr/src/app/uploads
+    networks:
+      - giftlink-network
+
+  # Frontend React App Service (served by Nginx)
+  frontend:
+    build:
+      context: ./giftlink-frontend
+      dockerfile: Dockerfile
+    container_name: giftlink-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - giftlink-network
+
+networks:
+  giftlink-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  uploads-data:
