@@ -7,7 +7,7 @@ const path = require('path');
 // MongoDB connection URL and Database Name
 const url = process.env.MONGO_URL || 'mongodb://127.0.0.1:27017/giftlinkdb';
 let dbInstance = null;
-const client = new MongoClient(url, { serverSelectionTimeoutMS: 2000 });
+const client = new MongoClient(url, { serverSelectionTimeoutMS: 5000 });
 
 // In-memory fallback storage in case local MongoDB is not running
 let inMemoryGifts = [];
