@@ -196,7 +196,15 @@ function MainPage() {
               {gifts.map((gift) => (
                 <div key={gift.id} className="gift-card" id={`gift-card-${gift.id}`}>
                   <div className="card-image-wrap">
-                    <img src={gift.image} alt={gift.name} loading="lazy" />
+                    <img
+                      src={gift.image}
+                      alt={gift.name}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=600&q=80';
+                      }}
+                    />
                     <span className="card-category-badge">{gift.category}</span>
                     <span className="card-condition-badge">{gift.condition}</span>
                   </div>

@@ -192,7 +192,14 @@ function DetailsPage() {
         <div className="details-grid">
           {/* Left Column: Image */}
           <div className="details-image-card">
-            <img src={gift.image} alt={gift.name} />
+            <img
+              src={gift.image}
+              alt={gift.name}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=600&q=80';
+              }}
+            />
           </div>
 
           {/* Right Column: Info & Actions */}
